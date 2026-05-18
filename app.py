@@ -1,3 +1,13 @@
+# --- CRITICAL CLOUD DATABASE HOTFIX ---
+__import__('pysqlite3')
+import sys
+sys.modules['sqlite3'] = sys.modules.pop('pysqlite3')
+
+import streamlit as st
+import os
+from crewai import Agent, Crew, Process, Task, LLM
+from crewai.tools import tool
+from duckduckgo_search import DDGS
 import streamlit as st
 import os
 from crewai import Agent, Crew, Process, Task, LLM
