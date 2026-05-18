@@ -2,3 +2,4 @@ streamlit
 crewai
 duckduckgo-search
 litellm
+pysqlite3-binary

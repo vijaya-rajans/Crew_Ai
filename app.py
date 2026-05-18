@@ -30,7 +30,11 @@ groq_llm = LLM(
 )
 
 # --- 3. APPLE-LIKE MINIMALIST AESTHETIC CSS STYLING ---
-st.set_page_config(page_title="VAIXUS Trend Intelligence", page_icon="", layout="wide")
+st.set_page_config(
+    page_title="VAIXUS Trend Intelligence",
+    page_icon="vaixus_logo.png",  # This links directly to your new logo file
+    layout="wide"
+)
 
 # Fixed: changed unsafe_allow_html to unsafe_allow_html
 st.markdown("""
