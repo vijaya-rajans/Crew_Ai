@@ -4,7 +4,7 @@
 import os
 import sys
 
-if os.name != 'nt':  # Triggers only on cloud Linux servers (Azure, Render, Streamlit Cloud)
+if os.name != 'nt':  
     try:
         __import__('pysqlite3')
         sys.modules['sqlite3'] = sys.modules.pop('pysqlite3')
@@ -12,11 +12,10 @@ if os.name != 'nt':  # Triggers only on cloud Linux servers (Azure, Render, Stre
         pass
 
 # ==============================================================================
-# 2. IMMEDIATE STREAMLIT PAGE INITIALIZATION (Guarantees < 3 Second Render)
+# 2. IMMEDIATE STREAMLIT PAGE INITIALIZATION (Guarantees Fast Render)
 # ==============================================================================
 import streamlit as st
 
-# Check for custom branding asset path stability
 logo_file = "vaixus_logo.png"
 page_icon_asset = logo_file if os.path.exists(logo_file) else "⚡"
 
@@ -30,28 +29,12 @@ st.set_page_config(
 # 3. VISUAL LAUNCH PROGRESS BAR & HEAVY FRAMEWORK LOADING
 # ==============================================================================
 with st.spinner("⚡ Initializing VAIXUS Core AI Framework Assets... Please wait."):
-    # Hidden inner imports prevent CrewAI dependencies from blocking the UI paint
     from crewai import Agent, Crew, Process, Task, LLM
-    from crewai.tools import tool
-    from duckduckgo_search import DDGS
+    # Upgraded Search Tool: Swapped DuckDuckGo for Enterprise Google Search
+    from crewai.tools import SerperDevTool 
 
 # ==============================================================================
-# 4. CUSTOM TOOLS DEFINITION LAYER
-# ==============================================================================
-@tool("Web Search Tool")
-def web_search_tool(query: str) -> str:
-    """Useful to search the internet for live, current information regarding trends and market insights."""
-    try:
-        with DDGS() as ddgs:
-            results = [r for r in ddgs.text(query, max_results=3)]
-            if results:
-                return "\n\n".join([f"Title: {r['title']}\nURL: {r['href']}\nSnippet: {r['body']}" for r in results])
-            return "No matching search records discovered."
-    except Exception as e:
-        return f"Search execution encountered an anomaly: {str(e)}"
-
-# ==============================================================================
-# 5. USER INTERACTION INTERFACE LAYOUT (Streamlit UI)
+# 4. USER INTERACTION INTERFACE LAYOUT (Streamlit UI)
 # ==============================================================================
 st.title("AI Trend Systems")
 st.caption("Autonomous 7-day trend intelligence and creative pipeline scriptwriter.")
@@ -60,22 +43,35 @@ st.subheader("⚡ Operational Control")
 
 # Secure retrieval of environment API key routing
 groq_api_key = os.getenv("GROQ_API_KEY")
+serper_api_key = os.getenv("SERPER_API_KEY")
 
 if not groq_api_key:
     st.error("Authentication Missing: Please configure your 'GROQ_API_KEY' inside your environment dashboard settings.")
+elif not serper_api_key:
+    st.error("Authentication Missing: Please configure your 'SERPER_API_KEY' inside your environment dashboard settings to unlock Google Search.")
 else:
     if st.button("Launch Autonomous Discovery", type="primary"):
-        st.info("Orchestrating agent network loops. Running real-time queries...")
+        st.info("Orchestrating agent network loops. Running real-time Google queries...")
+        
+        # Initialize Google Serper Tool natively
+        google_search_tool = SerperDevTool()
+        
+        # Configure stable Groq LLM instance with cache flag disabled
+        groq_llm = LLM(
+            model="groq/llama-3.3-70b-versatile", 
+            api_key=groq_api_key,
+            use_cache=False  # Explicitly fixes the 'cache_breakpoint' crash
+        )
         
         # ─── AGENT ENGINE DEFINITIONS ─────────────────────────────────────────
         researcher = Agent(
             role="Lead Trend Research Analyst",
             goal="Scrape the internet to uncover accelerating breakthroughs and consumer paradigm shifts.",
-            backstory="An elite data-scraping intelligence programmed to look past surface noise and identify high-velocity global trends.",
+            backstory="An elite data-scraping intelligence programmed to look past surface noise and identify high-velocity global trends using actual Google data indexes.",
             verbose=True,
             allow_delegation=False,
-            tools=[web_search_tool],
-            llm=LLM(model="groq/llama-3.3-70b-versatile", api_key=groq_api_key)
+            tools=[google_search_tool],  # Uses Google now!
+            llm=groq_llm
         )
 
         writer = Agent(
@@ -84,7 +80,7 @@ else:
             backstory="A master content architect specialized in packaging dense technical metrics into simple, fascinating narratives.",
             verbose=True,
             allow_delegation=False,
-            llm=LLM(model="groq/llama-3.3-70b-versatile", api_key=groq_api_key)
+            llm=groq_llm
         )
 
         # ─── OPERATIONAL TASK SPECIFICATIONS ──────────────────────────────────

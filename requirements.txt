@@ -1,5 +1,5 @@
 streamlit
 crewai
-duckduckgo-search
+crewai-tools
 litellm
 pysqlite3-binary
